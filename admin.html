@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SBFC Admin Panel</title>
+<style>
+body{margin:0;background:#070707;color:#eee;font-family:Arial}.wrap{max-width:1200px;margin:auto;padding:25px}.top{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}.gold{color:#d4af37}.login,.panel{background:#111;border:1px solid #292929;border-radius:16px;padding:25px;margin-top:25px}input,select{background:#080808;color:#fff;border:1px solid #333;border-radius:8px;padding:11px;width:100%;box-sizing:border-box;margin:7px 0 14px}button{border:0;border-radius:8px;padding:10px 15px;font-weight:bold;cursor:pointer}.login button{background:#d4af37;width:100%}.logout{background:#333;color:#fff}.stats{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0}.stat{background:#171717;padding:18px 25px;border-radius:12px}.table{overflow:auto}table{width:100%;border-collapse:collapse;min-width:900px}th,td{padding:12px;border-bottom:1px solid #292929;text-align:left;vertical-align:top}th{color:#d4af37}.approve{background:#176b35;color:#fff}.reject{background:#8b2424;color:#fff}.small{font-size:12px;color:#999}.hidden{display:none}.actions{display:flex;gap:6px}
+</style></head>
+<body><div class="wrap">
+<div class="top"><h1 class="gold">SB Football Club — Admin</h1><button class="logout hidden" id="logout">Logout</button></div>
+<div class="login" id="loginBox"><h2>Admin Login</h2><label>Username</label><input id="user"><label>Password</label><input id="pass" type="password"><button id="login">LOGIN</button><p id="loginMsg" class="small"></p></div>
+<div class="panel hidden" id="panel"><div class="stats"><div class="stat">Total: <b id="total">0</b></div><div class="stat">Pending: <b id="pending">0</b></div><div class="stat">Approved: <b id="approved">0</b></div><div class="stat">Rejected: <b id="rejected">0</b></div></div>
+<div class="table"><table><thead><tr><th>ID</th><th>Player</th><th>Contact</th><th>Position</th><th>Jersey</th><th>Address</th><th>Status / Action</th></tr></thead><tbody id="rows"></tbody></table></div></div>
+</div>
+<script>
+let token=localStorage.getItem('sbfc_admin_token');
+const $=id=>document.getElementById(id);
+async function load(){
+ const r=await fetch('/api/admin/registrations',{headers:{Authorization:'Bearer '+token}});
+ if(!r.ok){logout();return}
+ const a=await r.json(); $('total').textContent=a.length;$('pending').textContent=a.filter(x=>x.status==='pending').length;$('approved').textContent=a.filter(x=>x.status==='approved').length;$('rejected').textContent=a.filter(x=>x.status==='rejected').length;
+ $('rows').innerHTML=a.map(x=>`<tr><td><b>${x.registration_id}</b><br><span class="small">${x.created_at}</span></td><td><b>${esc(x.name)}</b><br>${x.dob}</td><td>${esc(x.phone)}<br>${esc(x.guardian||'')}</td><td>${esc(x.position)}</td><td>${x.jersey||'-'}</td><td>${esc(x.address)}<br><span class="small">${esc(x.experience||'')}</span></td><td>${x.status}<div class="actions">${x.status!=='approved'?`<button class="approve" onclick="setStatus(${x.id},'approved')">Approve</button>`:''}${x.status!=='rejected'?`<button class="reject" onclick="setStatus(${x.id},'rejected')">Reject</button>`:''}</div></td></tr>`).join('');
+}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+async function setStatus(id,status){await fetch('/api/admin/registrations/'+id,{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({status})});load()}
+function logout(){localStorage.removeItem('sbfc_admin_token');$('panel').classList.add('hidden');$('logout').classList.add('hidden');$('loginBox').classList.remove('hidden')}
+$('login').onclick=async()=>{let r=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:$('user').value,password:$('pass').value})});let j=await r.json();if(r.ok){token=j.token;localStorage.setItem('sbfc_admin_token',token);$('loginBox').classList.add('hidden');$('panel').classList.remove('hidden');$('logout').classList.remove('hidden');load()}else $('loginMsg').textContent=j.error||'Login failed'};
+$('logout').onclick=logout;
+if(token){$('loginBox').classList.add('hidden');$('panel').classList.remove('hidden');$('logout').classList.remove('hidden');load()}
+</script></body></html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SB Football Club | Player Registration</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#080808;color:#eee}
+header{padding:22px 7%;display:flex;align-items:center;gap:15px;border-bottom:1px solid #222;position:sticky;top:0;background:#080808ee;backdrop-filter:blur(8px);z-index:5}
+header img{width:55px;height:55px;object-fit:contain}header h2{margin:0;color:#d4af37}.hero{padding:70px 7%;text-align:center;background:linear-gradient(135deg,#111,#050505)}
+.hero h1{font-size:46px;margin:10px 0;color:#d4af37}.hero p{color:#bbb;font-size:18px}
+.container{max-width:900px;margin:35px auto;padding:0 20px}.card{background:#111;border:1px solid #282828;border-radius:18px;padding:28px;box-shadow:0 10px 30px #0006}
+h2{color:#d4af37}label{display:block;margin:15px 0 7px;color:#ddd}input,select,textarea{width:100%;padding:13px;border-radius:9px;border:1px solid #333;background:#090909;color:white;font-size:15px}textarea{min-height:100px;resize:vertical}
+button{margin-top:20px;width:100%;padding:14px;border:0;border-radius:10px;background:#d4af37;color:#080808;font-weight:700;font-size:16px;cursor:pointer}
+button:hover{filter:brightness(1.1)}.msg{margin-top:15px;padding:14px;border-radius:9px;display:none}.ok{background:#123d20;color:#9ff0ad}.err{background:#401515;color:#ffb0b0}
+footer{text-align:center;padding:35px;color:#777}
+</style>
+</head>
+<body>
+<header>
+<img src="/logo.jpg" alt="SB Football Club logo">
+<h2>SB FOOTBALL CLUB</h2>
+</header>
+<section class="hero">
+<h1>Player Registration</h1>
+<p>Nakla, Sherpur, Bangladesh • Age 16–23</p>
+</section>
+<div class="container">
+<div class="card">
+<h2>Join SB Football Club</h2>
+<form id="regForm">
+<label>Player Name *</label><input name="name" required>
+<label>Date of Birth *</label><input type="date" name="dob" required>
+<label>Phone Number *</label><input name="phone" required>
+<label>Guardian / Family Contact</label><input name="guardian">
+<label>Playing Position *</label>
+<select name="position" required><option value="">Select</option><option>GK</option><option>CB</option><option>LB</option><option>RB</option><option>DMF</option><option>CMF</option><option>AMF</option><option>LMF</option><option>RMF</option><option>LW</option><option>RW</option><option>SS</option><option>CF</option></select>
+<label>Preferred Jersey Number</label><input type="number" name="jersey" min="1" max="99">
+<label>Address *</label><textarea name="address" required></textarea>
+<label>Previous Football Experience</label><textarea name="experience"></textarea>
+<button type="submit">SUBMIT REGISTRATION</button>
+<div id="msg" class="msg"></div>
+</form>
+</div>
+</div>
+<footer>© 2026 SB Football Club • Nakla, Sherpur • 01804705515</footer>
+<script>
+const form=document.getElementById('regForm'),msg=document.getElementById('msg');
+form.addEventListener('submit',async e=>{
+ e.preventDefault(); msg.style.display='none';
+ const data=Object.fromEntries(new FormData(form));
+ try{
+  const r=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const j=await r.json();
+  msg.className='msg '+(r.ok?'ok':'err'); msg.style.display='block'; msg.textContent=r.ok?`Registration successful! Your ID: ${j.registrationId}`:(j.error||'Registration failed');
+  if(r.ok) form.reset();
+ }catch(err){msg.className='msg err';msg.style.display='block';msg.textContent='Server connection failed.'}
+});
+</script>
+</body>
+</html>
